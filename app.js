@@ -3,6 +3,8 @@
 const form = document.querySelector("form");
 const input = document.querySelector("input");
 const errorMsg = document.querySelector(".error-msg");
+const resultsDisplay = document.querySelector(".results-display");
+const loader = document.querySelector(".loader");
 
 form.addEventListener("submit", handleSubmit);
 
@@ -14,25 +16,36 @@ function handleSubmit(e) {
     return;
   } else {
     errorMsg.textContent = "";
+    loader.style.display = "flex";
+    resultsDisplay.textContent = "";
     wikiApiCall(input.value);
   }
 }
 
 async function wikiApiCall(searchInput) {
-  const response = await fetch(
-    `https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=20&srsearch=${searchInput}`
-  );
-  const data = await response.json();
-  console.log(data);
+  try {
+    const response = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=20&srsearch=${searchInput}`
+    );
 
-  createCards(data.query.search);
+    if (!response.ok) {
+      throw new Error(`${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(data);
+
+    createCards(data.query.search);
+  } catch (error) {
+    errorMsg.textContent = `${error}`;
+    loader.style.display = "none";
+  }
 }
-
-const resultsDisplay = document.querySelector(".results-display");
 
 function createCards(data) {
   if (!data.length) {
     errorMsg.textContent = "Woops, aucun résultat";
+    loader.style.display = "none";
     return;
   }
   data.forEach((el) => {
@@ -48,4 +61,5 @@ function createCards(data) {
      <br>`;
     resultsDisplay.appendChild(card);
   });
+  loader.style.display = "none";
 }
